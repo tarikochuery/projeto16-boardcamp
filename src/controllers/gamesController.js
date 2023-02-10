@@ -9,6 +9,10 @@ const gamesController = {
   createGame: async (req, res) => {
     const { name, image, stockTotal, pricePerDay } = req.body;
     try {
+      const { rows: [gameAlreadyExists] } = await db.query('SELECT * FROM games WHERE name = $1', [name]);
+
+      if (gameAlreadyExists) return res.sendStatus(409);
+
       await db
         .query(`INSERT INTO games (name, image, "stockTotal", "pricePerDay") values ($1, $2, $3, $4)`, [name, image, stockTotal, pricePerDay]);
       return res.sendStatus(201);
