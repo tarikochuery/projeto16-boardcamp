@@ -3,7 +3,7 @@ import gamesController from "../controllers/gamesController.js";
 import { validate } from "../middlewares/schemaMiddleware.js";
 import { gameSchema } from "../schemas/gameSchema.js";
 
-export const router = Router();
+export const gamesRouter = Router();
 
-router.get('/games', gamesController.getGames);
-router.post('/games', validate(gameSchema), gamesController.createGame);
+gamesRouter.get('/games', gamesController.getGames);
+gamesRouter.post('/games', validate(gameSchema), gamesController.createGame);
