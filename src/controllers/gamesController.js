@@ -7,6 +7,15 @@ const gamesController = {
   },
 
   createGame: async (req, res) => {
+    const { name, image, stockTotal, pricePerDay } = req.body;
+    try {
+      await db
+        .query(`INSERT INTO games (name, image, "stockTotal", "pricePerDay") values ($1, $2, $3, $4)`, [name, image, stockTotal, pricePerDay]);
+      return res.sendStatus(201);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).send('Deu ruim!');
+    }
 
   }
 };
