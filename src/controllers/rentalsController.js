@@ -18,10 +18,13 @@ const calculateDelayDays = ({ rentDate, returnDate, daysRented }) => {
   return daysDifference > daysRented ? daysDifference - daysRented : 0;
 };
 
-const setQuery = ({ customerId, gameId }) => {
+const setQuery = ({ customerId, gameId, limit, offset }) => {
   if (customerId && gameId) return rentalQueries.customerAndGameId(customerId, gameId);
   if (customerId) return rentalQueries.customerId(customerId);
   if (gameId) return rentalQueries.gameId(gameId);
+  if (limit && offset) return rentalQueries.limitAndOffset(limit, offset);
+  if (limit) return rentalQueries.limit(limit);
+  if (offset) return rentalQueries.offset(offset);
   return rentalQueries.default;
 };
 
@@ -29,9 +32,13 @@ const rentalsController = {
   getRentals: async (req, res) => {
     const customerId = Number(req.query.customerId);
     const gameId = Number(req.query.gameId);
+    const limit = Number(req.query.limit);
+    const offset = Number(req.query.offset);
     const query = setQuery({
       customerId,
-      gameId
+      gameId,
+      limit,
+      offset
     });
     try {
       const { rows } = await db
