@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { db } from "../config/db.connection.js";
 
 const verifyGame = async (gameId, stockTotal) => {
-  const { rowCount } = await db.query('SELECT * FROM rentals WHERE "gameId" = $1 AND "returnDate" = null', [gameId]);
+  const { rowCount } = await db.query('SELECT * FROM rentals WHERE "gameId" = $1 AND "returnDate" IS NULL', [gameId]);
   return stockTotal > rowCount;
 };
 
@@ -35,7 +35,7 @@ const rentalsController = {
     try {
       const { rows: [gameRented] } = await db.query('SELECT * FROM games WHERE id = $1', [gameId]);
       if (!gameRented) return res.status(400).send('Jogo não cadastrado');
-      const isGameAvailable = await verifyGame(gameId, gameRented.totalStock);
+      const isGameAvailable = await verifyGame(gameId, gameRented.stockTotal);
       if (!isGameAvailable) return res.status(400).send('Jogo Esgotado');
       const { rows: [rentingCustomer] } = await db.query('SELECT * FROM customers WHERE id = $1', [customerId]);
       if (!rentingCustomer) return res.status(400).send('cliente não cadastrado');
