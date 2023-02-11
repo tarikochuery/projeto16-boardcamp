@@ -3,13 +3,30 @@ import { db } from "../config/db.connection.js";
 const costumerController = {
   getCustomers: async (req, res) => {
     const { cpf } = req.query;
+    const limit = Number(req.query.limit);
+    const offset = Number(req.query.offset);
     try {
-      if (!cpf) {
-        const { rows: customers } = await db.query('SELECT * FROM customers');
+      if (cpf) {
+        const { rows: customers } = await db
+          .query(`SELECT * FROM customers WHERE cpf LIKE '${cpf}%'`);
         return res.send(customers);
       }
-      const { rows: customers } = await db
-        .query(`SELECT * FROM customers WHERE cpf LIKE '${cpf}%'`);
+      if (limit && offset) {
+        const { rows: customers } = await db
+          .query(`SELECT * FROM customers LIMIT ${limit} OFFSET ${offset}`);
+        return res.send(customers);
+      }
+      if (limit) {
+        const { rows: customers } = await db
+          .query(`SELECT * FROM customers LIMIT ${limit}`);
+        return res.send(customers);
+      }
+      if (offset) {
+        const { rows: customers } = await db
+          .query(`SELECT * FROM customers OFFSET ${offset}`);
+        return res.send(customers);
+      }
+      const { rows: customers } = await db.query('SELECT * FROM customers');
       return res.send(customers);
     } catch (error) {
       return res.status(500).send('Deu ruim no banco de dados');
