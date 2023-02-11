@@ -1,9 +1,23 @@
 import { db } from "../config/db.connection.js";
 
+const treatGameName = (name) => {
+  const nameArray = name.split("");
+  nameArray[0] = nameArray[0].toUpperCase();
+  const treatedName = nameArray.join('');
+  return treatedName;
+};
+
 const gamesController = {
   getGames: async (req, res) => {
-    const { rows } = await db.query('SELECT * FROM games');
-    res.send(rows);
+    const { name } = req.query;
+    if (!name) {
+      const { rows } = await db.query('SELECT * FROM games');
+      return res.send(rows);
+    }
+    const treatedName = treatGameName(name);
+    const { rows } = await db
+      .query(`SELECT * FROM games WHERE name LIKE '${treatedName}%'`);
+    return res.send(rows);
   },
 
   createGame: async (req, res) => {
