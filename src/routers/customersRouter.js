@@ -8,3 +8,4 @@ export const customerRouter = Router();
 customerRouter.get('/customers', customerController.getCustomers);
 customerRouter.get('/customers/:id', customerController.getCustomersById);
 customerRouter.post('/customers', validate(customerSchema), customerController.createCustomer);
+customerRouter.put('/customers/:id', validate(customerSchema), customerController.updateCustomer);

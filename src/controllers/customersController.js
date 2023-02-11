@@ -34,6 +34,27 @@ const costumerController = {
       console.log(error);
       res.status(500).send('Deu ruim no banco');
     }
+  },
+  updateCustomer: async (req, res) => {
+    const { id } = req.params;
+    const { name, cpf, phone, birthday } = req.body;
+    try {
+      const { rows: [customerToBeUpdated] } = await db
+        .query('SELECT * FROM customers WHERE id = $1', [id]);
+      if (!customerToBeUpdated) return res.sendStatus(404);
+      if (cpf !== customerToBeUpdated.cpf) {
+        console.log('If de cpfs diferentes');
+        const { rows: [cpfAlreadyExists] } = await db.
+          query('SELECT * FROM customers WHERE cpf = $1 AND id <> $2', [cpf, id]);
+        if (cpfAlreadyExists) return res.sendStatus(409);
+      }
+      await db.query('UPDATE customers SET name = $1, cpf = $2, phone = $3, birthday = $4 WHERE id = $5', [name, cpf, phone, birthday, id]);
+      res.sendStatus(200);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Deu ruim no db');
+    }
+
   }
 };
 
