@@ -82,6 +82,20 @@ const rentalsController = {
       console.log(error);
       res.status(500).send('Deu ruim no servidor');
     }
+  },
+  deleteRental: async (req, res) => {
+    const { id } = req.params;
+    try {
+      const { rows: [rental] } = await db
+        .query('SELECT * FROM rentals WHERE id=$1', [id]);
+      if (!rental) return res.sendStatus(404);
+      if (!rental.returnDate) return res.status(400).send('Aluguel ainda não finalizado');
+      await db.query('DELETE FROM rentals WHERE id = $1', [id]);
+      res.sendStatus(200);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Deu ruim no servidor');
+    }
   }
 };
 
