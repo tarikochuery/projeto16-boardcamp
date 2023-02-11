@@ -2,9 +2,15 @@ import { db } from "../config/db.connection.js";
 
 const costumerController = {
   getCustomers: async (req, res) => {
+    const { cpf } = req.query;
     try {
-      const { rows: customers } = await db.query('SELECT * FROM customers');
-      res.send(customers);
+      if (!cpf) {
+        const { rows: customers } = await db.query('SELECT * FROM customers');
+        return res.send(customers);
+      }
+      const { rows: customers } = await db
+        .query(`SELECT * FROM customers WHERE cpf LIKE '${cpf}%'`);
+      return res.send(customers);
     } catch (error) {
       return res.status(500).send('Deu ruim no banco de dados');
     }
