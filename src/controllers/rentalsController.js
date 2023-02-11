@@ -19,6 +19,9 @@ const calculateDelayDays = ({ rentDate, returnDate, daysRented }) => {
 
 const rentalsController = {
   getRentals: async (req, res) => {
+    const querys = req.query;
+    const customerId = Number(querys.customerId);
+    const gameId = Number(querys.gameId);
     try {
       const { rows } = await db
         .query(`SELECT rentals.*, games.name AS "gameName", customers.name AS "customerName"
@@ -33,6 +36,23 @@ const rentalsController = {
         const { gameName, customerName, ...rental } = row;
         return { ...rental, game, customer };
       });
+
+      if (gameId && customerId) {
+        const filteredRentals = rentals.filter(rental => (
+          rental.gameId === gameId && rental.customerId === customerId
+        ));
+        return res.send(filteredRentals);
+      }
+      if (gameId) {
+        const filteredRentals = rentals.filter(rental => rental.gameId === gameId);
+        return res.send(filteredRentals);
+      }
+      if (customerId) {
+        const filteredRentals = rentals.filter(rental => {
+          return rental.customerId === customerId;
+        });
+        return res.send(filteredRentals);
+      }
       res.send(rentals);
 
     } catch (error) {
