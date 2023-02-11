@@ -10,14 +10,31 @@ const treatGameName = (name) => {
 const gamesController = {
   getGames: async (req, res) => {
     const { name } = req.query;
-    if (!name) {
-      const { rows } = await db.query('SELECT * FROM games');
-      return res.send(rows);
+    const offset = Number(req.query.offset);
+    const limit = Number(req.query.limit);
+    if (name) {
+      const treatedName = treatGameName(name);
+      const { rows: games } = await db
+        .query(`SELECT * FROM games WHERE name LIKE '${treatedName}%'`);
+      return res.send(games);
     }
-    const treatedName = treatGameName(name);
-    const { rows } = await db
-      .query(`SELECT * FROM games WHERE name LIKE '${treatedName}%'`);
-    return res.send(rows);
+    if (offset && limit) {
+      const { rows: games } = await db
+        .query(`SELECT * FROM games LIMIT ${limit} OFFSET ${offset}`);
+      return res.send(games);
+    }
+    if (limit) {
+      const { rows: games } = await db
+        .query(`SELECT * FROM games LIMIT ${limit}`);
+      return res.send(games);
+    }
+    if (offset) {
+      const { rows: games } = await db
+        .query(`SELECT * FROM games OFFSET ${offset}`);
+      return res.send(games);
+    }
+    const { rows: games } = await db.query('SELECT * FROM games');
+    return res.send(games);
   },
 
   createGame: async (req, res) => {
