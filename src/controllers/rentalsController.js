@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
-import { db } from "../config/db.connection.js";
+import { db } from "../db/db.connection.js";
+import rentalQueries from "../db/db.rentals.queries.js";
 
 const verifyGame = async (gameId, stockTotal) => {
   const { rowCount } = await db.query('SELECT * FROM rentals WHERE "gameId" = $1 AND "returnDate" IS NULL', [gameId]);
@@ -17,42 +18,30 @@ const calculateDelayDays = ({ rentDate, returnDate, daysRented }) => {
   return daysDifference > daysRented ? daysDifference - daysRented : 0;
 };
 
+const setQuery = ({ customerId, gameId }) => {
+  if (customerId && gameId) return rentalQueries.customerAndGameId(customerId, gameId);
+  if (customerId) return rentalQueries.customerId(customerId);
+  if (gameId) return rentalQueries.gameId(gameId);
+  return rentalQueries.default;
+};
+
 const rentalsController = {
   getRentals: async (req, res) => {
-    const querys = req.query;
-    const customerId = Number(querys.customerId);
-    const gameId = Number(querys.gameId);
+    const customerId = Number(req.query.customerId);
+    const gameId = Number(req.query.gameId);
+    const query = setQuery({
+      customerId,
+      gameId
+    });
     try {
       const { rows } = await db
-        .query(`SELECT rentals.*, games.name AS "gameName", customers.name AS "customerName"
-        FROM games
-        JOIN rentals
-        ON games.id = rentals."gameId"
-        JOIN customers
-        ON customers.id = rentals."customerId"`);
+        .query(query);
       const rentals = rows.map(row => {
         const game = { id: row.gameId, name: row.gameName };
         const customer = { id: row.customerId, name: row.customerName };
         const { gameName, customerName, ...rental } = row;
         return { ...rental, game, customer };
       });
-
-      if (gameId && customerId) {
-        const filteredRentals = rentals.filter(rental => (
-          rental.gameId === gameId && rental.customerId === customerId
-        ));
-        return res.send(filteredRentals);
-      }
-      if (gameId) {
-        const filteredRentals = rentals.filter(rental => rental.gameId === gameId);
-        return res.send(filteredRentals);
-      }
-      if (customerId) {
-        const filteredRentals = rentals.filter(rental => {
-          return rental.customerId === customerId;
-        });
-        return res.send(filteredRentals);
-      }
       res.send(rentals);
 
     } catch (error) {

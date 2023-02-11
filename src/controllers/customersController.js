@@ -1,4 +1,4 @@
-import { db } from "../config/db.connection.js";
+import { db } from "../db/db.connection.js";
 
 const costumerController = {
   getCustomers: async (req, res) => {
