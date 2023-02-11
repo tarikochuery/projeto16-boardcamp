@@ -6,6 +6,17 @@ const verifyGame = async (gameId, stockTotal) => {
   return stockTotal > rowCount;
 };
 
+const getGamePricePerDay = async (gameId) => {
+  const { rows: [{ pricePerDay }] } = await db
+    .query(`SELECT * FROM games WHERE id=${gameId}`);
+  return pricePerDay;
+};
+
+const calculateDelayDays = ({ rentDate, returnDate, daysRented }) => {
+  const daysDifference = dayjs(returnDate).diff(rentDate, 'day');
+  return daysDifference > daysRented ? daysDifference - daysRented : 0;
+};
+
 const rentalsController = {
   getRentals: async (req, res) => {
     try {
@@ -44,6 +55,29 @@ const rentalsController = {
       await db
         .query('INSERT INTO rentals ("customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee") values ($1, $2, $3, $4, $5, $6, $7)', rentalValuesArray);
       res.sendStatus(201);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Deu ruim no servidor');
+    }
+  },
+  finishRental: async (req, res) => {
+    const { id } = req.params;
+    try {
+      const returnDate = dayjs().format('YYYY-MM-DD');
+      const { rows: [rental] } = await db
+        .query('SELECT * FROM rentals WHERE id = $1', [id]);
+      if (!rental) return res.sendStatus(404);
+      if (rental.returnDate) return res.status(400).send('Aluguel já finalizado');
+      const returnDelay = calculateDelayDays({
+        returnDate,
+        rentDate: rental.rentDate,
+        daysRented: rental.daysRented
+      });
+      const gamePricePerDay = await getGamePricePerDay(rental.gameId);
+      const delayFee = gamePricePerDay * returnDelay;
+      await db
+        .query('UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id=$3', [returnDate, delayFee, id]);
+      return res.send(200);
     } catch (error) {
       console.log(error);
       res.status(500).send('Deu ruim no servidor');
